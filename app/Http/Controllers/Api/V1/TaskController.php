@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
+
 // use Illuminate\Http\RedirectResponse;
 // use Illuminate\Http\Response;
 
@@ -43,7 +44,7 @@ class TaskController extends Controller
     public function update(UpdateTaskRequest $request, Task $task)
     {
         $task->update($request->validated());
-        
+
         return TaskResource::make($task);
     }
 
