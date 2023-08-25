@@ -10,4 +10,4 @@ Configuracao inicial do aplicativo Laravel
     => Rodar as migrations 
         -> php artisan migrate
 
-https://www.udemy.com/course/laravel-vuejs-fullstack-web-development/learn/lecture/36619332#content
+https://www.udemy.com/course/laravel-vuejs-fullstack-web-development/learn/lecture/36619468#content
