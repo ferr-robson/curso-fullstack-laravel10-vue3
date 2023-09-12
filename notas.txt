@@ -10,4 +10,116 @@ Configuracao inicial do aplicativo Laravel
     => Rodar as migrations 
         -> php artisan migrate
 
-https://www.udemy.com/course/laravel-vuejs-fullstack-web-development/learn/lecture/36619468#content
+----------------------------------------------------------------------------------------------------
+
+Revisao:
+    => https://www.udemy.com/course/laravel-vuejs-fullstack-web-development/learn/lecture/36619290#content
+    
+Criar modelo
+    => php artisan make:model NomeModelo --all
+        -> Model
+        -> Migration
+        -> Factory
+        -> Seeder
+        -> Policy
+        -> Controller
+        -> Form requests
+
+Configurar a factory
+    => informar o campo e o valor a ser preenchido dentro do return do metodo   
+        -> return [
+            'name' => fake()->sentence(),
+            'is_completed' => rand(0,1)
+        ]
+
+Rodando a seeder
+    => nao foi usado o seeder do modelo. Este pode ate ser removido
+        -> no lugar dele, usa-se o DatabaseSeeder.php
+    => dentro do metodo run()
+        -> NomeModelo::factory(qtdeDeRegistrosASeremCriados)->create()
+            > public function run(): void {
+                Task::factory(10)->create;
+            }
+    => para rodar o migration e o seed ao mesmo tempo, basta usar o comando
+        -> php artisan migrate --seed
+
+Ordem de configuracao 
+    -> migration > factory > seeder > controller > route > resource > modelo-request > fillable >
+
+Versionamento dos controladores
+    => dentro da pasta controller, criar um novo diretorio com o nome de Api
+        -> dentro dele, criar criar um novo diretorio para cada versao do site
+            > app\Http\Controllers\Api\V1
+            > app\Http\Controllers\Api\V2
+            > o controlador criado pelo --all devera ser movido para a pasta da versao em questao e o namespace do arquivo devera ser ajustado manualmente
+                - o controllado base devera ser importado, pois o controlador que criamos extende ele e eles nao estao mais no mesmo diretorio
+                    -- use App\Http\Controllers\Controller;
+            > dentro desse diretorio ainda sera necessario criar a pasta responsavel para fazer a autenticacao, no futuro
+                - app\Http\Controllers\Api\Auth
+
+apiResource
+    =>  use App\Http\Controllers\Api\Vx\NomeModeloController;
+        Route::apiResource('/nome-da-rota', NomeModelo::class);
+        -> quanto ao prefixo, eh interessante coloca-lo num grupo de rotas
+            > Route::prefix('vx')->group(function () {
+                Route::apiResource('/nome-da-rota', NomeModelo::class);
+            });
+
+Resource
+    => funciona como uma view do SLQ
+    => php artisan make:resource NomeModeloResource
+        -> app\Http\Resources\NomeModeloResource
+    => dentro do metodo toArray(), configurar o return para mostrar apenas as colunas de interesse
+        -> public function toArray(Request $request): array
+           {
+               return [
+                   'id' => $this->id,
+                   'name' => $this->name,
+                   'is_completed' => (bool) $this->is_completed
+               ];
+           }
+    => com o resource, ao inves de recuperar os dados apenas com o all (NomeModelo::all()), usandom o resouce tambem
+        -> usa-se NomeModeloResource(NomeModelo::all()); para recuperar todos os registros da tabela
+        -> usa-se NomeModeloResource($variavel_que_guarda_um_registro_de_NomeModelo); para recuperar um unico registro
+    
+Form requests
+    => criado com o parametro --all
+    => centraliza a logica de validacao dos request
+    => settar o return de authorize() para true
+    => definir as regras de validacao no metodo rules()
+        -> public function rules(): array
+           {
+               return [
+                   'name' => 'required|string|max:255'
+               ];
+           }
+    => fazer, se ainda nao foi feito, o import do FormRequest no controlador
+    => chamar o metodo validate() do objeto FormRequest
+        -> public function update(UpdateTaskRequest $request, Task $task)
+           {
+               $task->update($request->validated());
+               return TaskResource::make($task);
+           }
+
+Configurar o UpdateNomeModeloRequest
+    => normalmente os dados de validacao serao os mesmo usados no StoreNomeModeloRequest
+        -> nesse caso, basta remover todo conteudo de UpdateNomeModeloRequest e substituir o import de FormRequest por StoreNomeModeloRequest
+            > class UpdateTaskRequest extends StoreTaskRequest {}
+
+Invokable controller
+    => php artisan make:controller caminho/do/controller/se/necessario/NomeController --invokable  
+    => atualizar os parametros 
+    => lembrar que criar uma nova rota para o novo controlador
+
+Sanctum
+    => instalar:
+        -> composer require laravel/sanctum
+    => publicar: 
+        -> php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+    => migrations necessarias
+        -> php artisan migrate
+    => abrir o arquivo App\Http\Kernel
+        -> em $middlewareGroups, na secao de api, descomentar o primeiro comando
+            > \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+    => criar/alterar a variavel SESSION_DOMAIN, colocando o valor do dominio da apliacacao
+        -> SESSION_DOMAIN=localhost
